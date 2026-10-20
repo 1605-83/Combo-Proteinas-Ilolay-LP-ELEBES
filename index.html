@@ -86,7 +86,7 @@ footer{margin-top:16px;font-size:.78rem;color:var(--ink2);text-align:center;line
     <div class="ctrl">
       <div class="seg" role="group" aria-label="Vista"><button type="button" data-m="cli" class="sel">Clientes para el combo</button><button type="button" data-m="comb">Combos realizados</button></div>
       <select id="fVend" aria-label="Vendedor"><option value="">Todos los vendedores</option></select>
-      <select id="fGr" aria-label="Gramaje"><option value="">180 y 220</option><option value="180">Solo 180 g</option><option value="220">Solo 220 g</option></select>
+      <select id="fGr" aria-label="Producto"><option value="">180 y 220</option><option value="180">Solo 180 g</option><option value="220">Solo 220 g</option><option value="l5">Leche 5323</option><option value="n3">Natural 350</option></select>
     </div>
   </div>
   <div class="card kpis" id="kpis"></div>
@@ -175,7 +175,9 @@ const EST={ok:['t-ok','Válido'],no:['t-no','Ya compró proteína en sep/oct'],a
 
 function dibujar(){
   const {yaCompro,C,comboCli,L5,N3}=calcular();
-  const fv=$('fVend').value, fg=$('fGr').value, q='';
+  // producto elegido: 180 / 220 filtran los combos; Leche 5323 y Natural 350 ordenan por esa columna y en cada vendedor
+  // muestran los clientes que la compraron desde el 21/10 (pedido de Bruno, 20/10/2026)
+  const fv=$('fVend').value, fsel=$('fGr').value, fg= fsel==='180'||fsel==='220'? fsel : '', fp= fsel==='l5'||fsel==='n3'? fsel : '', q='';
   const val=C.filter(c=>c.est==='ok');
   const n180=val.filter(c=>c.g==='180').length, n220=val.filter(c=>c.g==='220').length, nVal=val.length;
   const cliCombo=new Set(val.map(c=>c.cli)).size;
@@ -203,12 +205,12 @@ function dibujar(){
   let h='';
   for(const v of V){ const ab=abiertos.has(v.c);
     const L=v.eleg.map(k=>({cod:String(k[0]), rs:k[1], loc:k[3], dia:k[5], g180:comboCli.has(String(k[0])+'|180'), g220:comboCli.has(String(k[0])+'|220'), l5:L5.cli[String(k[0])]||0, n3:N3.cli[String(k[0])]||0}))
-      .filter(k=>!q || k.cod===q || (k.rs||'').toLowerCase().includes(q));
+      .filter(k=>(!q || k.cod===q || (k.rs||'').toLowerCase().includes(q)) && (!fp || k[fp]>0));
     if(q && !L.length) continue;
     h+=`<div class="vrow${ab?' ab':''}" data-v="${v.c}" role="button" tabindex="0" aria-expanded="${ab}"><span class="chev">›</span><span class="vn"><span class="cod">${v.c}</span>${esc(v.n)}</span><span class="r m">${fmtN(v.cart)}</span><span class="r m"><b>${v.c180}</b></span><span class="r m"><b>${v.c220}</b></span><span class="r m"><b>${fmtN(v.l5)}</b></span><span class="r m"><b>${fmtN(v.n3)}</b></span><span class="m"><span class="bar"><i style="width:${v.p*100}%"></i></span>${fmtP(v.p)}</span><span class="vend m">${v.vend.length? `<b>${v.vend.length} combo${v.vend.length>1?'s':''}</b> · ${v.vend.filter(x=>x.est==='ok').length} válido${v.vend.filter(x=>x.est==='ok').length===1?'':'s'}${v.vend.map(x=>`<span class="cl" title="${esc(x.cli+' '+titulo(x.rs))} · ${x.g} g · ${dmy(x.car)} · ${EST[x.est][1]}">${esc(x.cli)} ${esc(titulo(x.rs))}<i class="${x.est}">${x.g}</i></span>`).join('')}` : '—'}</span></div>`;
-    if(ab){ L.sort((a,b)=>(+(a.g180||a.g220))-(+(b.g180||b.g220)) || (ORD_DIA[a.dia]||9)-(ORD_DIA[b.dia]||9) || a.cod.localeCompare(b.cod,undefined,{numeric:true}));
+    if(ab){ L.sort((a,b)=>(fp? b[fp]-a[fp] : 0) || (+(a.g180||a.g220))-(+(b.g180||b.g220)) || (ORD_DIA[a.dia]||9)-(ORD_DIA[b.dia]||9) || a.cod.localeCompare(b.cod,undefined,{numeric:true}));
       const est=ok=>ok? '<span class="tag t-ok">Con combo</span>' : '<span class="tag t-pe">Pendiente</span>';
-      h+=`<div class="det"><table><thead><tr><th>Código</th><th>Razón social</th><th>Día de visita</th>${fg!=='220'? '<th>Combo 180 g</th>' : ''}${fg!=='180'? '<th>Combo 220 g</th>' : ''}<th class="r">Leche 5323</th><th class="r">Natural 350</th></tr></thead><tbody>${L.map(k=>`<tr><td><b>${esc(k.cod)}</b></td><td>${esc(titulo(k.rs))}</td><td>${DIA[k.dia]||'—'}</td>${fg!=='220'? `<td>${est(k.g180)}</td>` : ''}${fg!=='180'? `<td>${est(k.g220)}</td>` : ''}<td class="r">${k.l5? fmtN(k.l5) : '—'}</td><td class="r">${k.n3? fmtN(k.n3) : '—'}</td></tr>`).join('')||'<tr><td colspan="7">Sin clientes.</td></tr>'}</tbody></table></div>`; }
+      h+=`<div class="det"><table><thead><tr><th>Código</th><th>Razón social</th><th>Día de visita</th>${fg!=='220'? '<th>Combo 180 g</th>' : ''}${fg!=='180'? '<th>Combo 220 g</th>' : ''}<th class="r">Leche 5323</th><th class="r">Natural 350</th></tr></thead><tbody>${L.map(k=>`<tr><td><b>${esc(k.cod)}</b></td><td>${esc(titulo(k.rs))}</td><td>${DIA[k.dia]||'—'}</td>${fg!=='220'? `<td>${est(k.g180)}</td>` : ''}${fg!=='180'? `<td>${est(k.g220)}</td>` : ''}<td class="r">${k.l5? fmtN(k.l5) : '—'}</td><td class="r">${k.n3? fmtN(k.n3) : '—'}</td></tr>`).join('')||(fp? `<tr><td colspan="7">Ningún cliente para el combo compró ${fp==='l5'? 'Leche 5323' : 'Natural 350'} desde el 21/10.</td></tr>` : '<tr><td colspan="7">Sin clientes.</td></tr>')}</tbody></table></div>`; }
   }
   $('filas').innerHTML=h||'<div class="vacio">Sin resultados.</div>';
 }
@@ -225,7 +227,7 @@ document.addEventListener('click',e=>{
   const th=e.target.closest('.th span[data-k]'); if(th){ const k=th.dataset.k; if(sortK===k) sortD=-sortD; else { sortK=k; sortD=k==='n'? 1 : -1; } dibujar(); }
 });
 document.addEventListener('keydown',e=>{ const vr=e.target.closest&&e.target.closest('.vrow'); if(vr&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); vr.click(); } });
-$('fVend').addEventListener('change',dibujar); $('fGr').addEventListener('change',dibujar); 
+$('fVend').addEventListener('change',dibujar); $('fGr').addEventListener('change',()=>{ const f=$('fGr').value; if(f==='l5'||f==='n3'){ sortK=f; sortD=-1; } else if(sortK==='l5'||sortK==='n3'){ sortK='vend'; sortD=-1; } dibujar(); }); 
 
 (async function(){
   try{
