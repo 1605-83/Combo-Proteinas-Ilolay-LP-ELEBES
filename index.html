@@ -42,7 +42,7 @@ button.dl{font:inherit;font-size:.88rem;padding:8px 14px;border:1px solid var(--
 .kpi{padding:14px 22px;border-right:1px solid var(--line);min-width:0}.kpi:last-child{border-right:0}
 .kpi .l{font-size:.85rem;color:var(--ink2)}.kpi .v{font-size:1.6rem;font-weight:500;margin:6px 0 2px}.kpi .n{font-size:.82rem;color:var(--ink2)}
 .lista{margin-top:14px;overflow:hidden}
-.th,.vrow{display:grid;grid-template-columns:30px minmax(150px,1fr) 90px 100px 90px 90px 160px;gap:10px;align-items:center;padding:11px 18px}
+.th,.vrow{display:grid;grid-template-columns:30px minmax(150px,1fr) 90px 90px 90px 90px 90px 150px;gap:10px;align-items:center;padding:11px 18px}
 .th{font-size:.82rem;font-weight:700;background:#FAFAFA;border-bottom:1px solid var(--line)}
 .th span{cursor:pointer;user-select:none}.r{text-align:right}
 .vrow{border-bottom:1px solid var(--line);cursor:pointer}.vrow:hover{background:#F6F9FF}
@@ -79,7 +79,7 @@ footer{margin-top:16px;font-size:.78rem;color:var(--ink2);text-align:center;line
   </div>
   <div class="card kpis" id="kpis"></div>
   <div class="card lista" id="lista">
-    <div class="th" id="th"><span></span><span data-k="n">Vendedor</span><span class="r" data-k="eleg">Para combo</span><span class="r" data-k="cart">Cartera</span><span class="r" data-k="c180">Combos 180</span><span class="r" data-k="c220">Combos 220</span><span data-k="p">% con combo</span></div>
+    <div class="th" id="th"><span></span><span data-k="n">Vendedor</span><span class="r" data-k="eleg">Para combo</span><span class="r" data-k="cart">Cartera</span><span class="r" data-k="c180">Combos 180</span><span class="r" data-k="c220">Combos 220</span><span class="r" data-k="l5" title="Unidades de Leche larga vida Proteínas 1 L (5323) vendidas desde el 19/10">Leche 5323</span><span data-k="p">% con combo</span></div>
     <div id="filas"></div>
   </div>
   <footer>Vigencia 19/10 al 31/10/2026 (o hasta agotar la asignación) · Canal: todos · Combo: 2 Vainilla + 2 Frutilla del mismo gramaje y van 2 unidades sin cargo · 1 combo por cliente de cada gramaje (hasta 2 por cliente) · Para clientes que no compraron 3570 / 3571 (Proteína 180) ni 5323 (leche Proteínas 1 L) entre el 01/09 y el 18/10 · Reconocimiento por NC a costo distribuidor · Datos de la base de Gescom; lo cargado hoy se actualiza solo, sin recargar</footer>
@@ -90,6 +90,7 @@ const B='https://1605-83.github.io/Reporte-Diario-Ventas/', RAW='https://raw.git
 const VIG_D='2026-10-19', VIG_H='2026-10-31';                 // vigencia, por fecha de carga del pedido
 const EXCL_D='2026-09-01', EXCL_H='2026-10-18';               // quien compro 3570 / 3571 / 5323 en este periodo no entra (5323 agregado por Bruno, 20/10/2026)
 const EXCL_COD=new Set(['3570','3571','5323']);   // yogur batido Proteína 180 Frutilla y Vainilla, leche larga vida Proteínas 1 L
+const COD_LECHE='5323';
 const GRAM={'180':{v:'3571',f:'3570',n:'Yogur batido Proteína 180 g'}, '220':{v:'4531',f:'4530',n:'Tetratop Proteína 220 g'}};
 const COD_G={}; for(const g in GRAM){ COD_G[GRAM[g].v]=[g,'v']; COD_G[GRAM[g].f]=[g,'f']; }
 const EQUIPO=new Set([2,4,5,6,7,24,26,27,28,29,30,51,52,53,54,56,61,62,63,64,73,74,75]);   // vendedores del reporte, como en Clientes sin Softys
@@ -151,12 +152,16 @@ function calcular(){
     else if(p.sc<1.5) p.est='av';
     else if(usado.has(p.cli+'|'+p.g)) p.est='rep';
     else { p.est='ok'; usado.add(p.cli+'|'+p.g); } }
-  return {yaCompro, C, comboCli:usado};
+  // leche Proteinas 1 L (5323) vendida en la vigencia, neta de devoluciones (pedido de Bruno, 20/10/2026)
+  const L5={v:{},cli:{},venta:{}};
+  for(const x of F){ if(x.cod!==COD_LECHE || x.car<VIG_D || x.car>VIG_H) continue;
+    L5.v[x.v]=(L5.v[x.v]||0)+x.cant; L5.cli[x.cli]=(L5.cli[x.cli]||0)+x.cant; L5.venta[x.venta]=(L5.venta[x.venta]||0)+x.cant; }
+  return {yaCompro, C, comboCli:usado, L5};
 }
 const EST={ok:['t-ok','Válido'],no:['t-no','Ya compró proteína en sep/oct'],av:['t-av','Sin las 2 sin cargo'],rep:['t-pe','Repetido (ya tiene combo de este gramaje)']};
 
 function dibujar(){
-  const {yaCompro,C,comboCli}=calcular();
+  const {yaCompro,C,comboCli,L5}=calcular();
   const fv=$('fVend').value, fg=$('fGr').value, q=$('fCli').value.trim().toLowerCase();
   const val=C.filter(c=>c.est==='ok'), tope=+$('fTope').value||0;
   const n180=val.filter(c=>c.g==='180').length, n220=val.filter(c=>c.g==='220').length, nVal=val.length;
@@ -170,50 +175,50 @@ function dibujar(){
     const eleg=lista.filter(k=>!yaCompro.has(String(k[0])));
     const cv180=val.filter(x=>x.v===cv && x.g==='180').length, cv220=val.filter(x=>x.v===cv && x.g==='220').length;
     const conCombo=eleg.filter(k=>[...['180','220']].some(g=>(!fg||fg===g) && comboCli.has(String(k[0])+'|'+g))).length;
-    V.push({c:cv, n:NOMV[cv]||('Vendedor '+cv), cart:lista.length, eleg, c180:cv180, c220:cv220, cc:conCombo, p: eleg.length? conCombo/eleg.length : 0}); }
+    V.push({c:cv, n:NOMV[cv]||('Vendedor '+cv), cart:lista.length, eleg, c180:cv180, c220:cv220, l5:L5.v[cv]||0, cc:conCombo, p: eleg.length? conCombo/eleg.length : 0}); }
   const tEleg=V.reduce((a,v)=>a+v.eleg.length,0), tCart=V.reduce((a,v)=>a+v.cart,0);
   const sinB=C.filter(c=>c.est==='av'&&(!fv||String(c.v)===fv)).length;
   $('kpis').innerHTML=`<div class="kpi"><div class="l">Clientes para el combo</div><div class="v" style="color:var(--marca)">${fmtN(tEleg)}</div><div class="n">${tCart? fmtP(tEleg/tCart) : '—'} de ${fmtN(tCart)} clientes de la cartera no compraron 3570, 3571 ni 5323 en sep/oct</div></div>
     <div class="kpi"><div class="l">Clientes con combo</div><div class="v" style="color:var(--verde)">${fmtN(cliCombo)}</div><div class="n">${fmtN(nVal)} combos válidos (${fmtN(n180)} de 180 g y ${fmtN(n220)} de 220 g)</div></div>
     <div class="kpi"><div class="l">A reconocer por NC</div><div class="v">${fmt$(rec)}</div><div class="n">2 unidades sin cargo por combo, a costo distribuidor</div></div>
     <div class="kpi"><div class="l">Para revisar</div><div class="v" style="color:${sinB||C.some(c=>c.est==='no')?'var(--ambar)':'var(--ink)'}">${fmtN(C.filter(c=>c.est!=='ok'&&(!fv||String(c.v)===fv)).length)}</div><div class="n">${fmtN(sinB)} sin las 2 sin cargo · ${fmtN(C.filter(c=>c.est==='no'&&(!fv||String(c.v)===fv)).length)} de clientes que ya compraban</div></div>`;
-  if(modo==='comb') return dibujarCombos(C,fv,fg,q);
+  if(modo==='comb') return dibujarCombos(C,fv,fg,q,L5);
   $('th').hidden=false;
-  const valK={n:v=>v.n, eleg:v=>v.eleg.length, cart:v=>v.cart, c180:v=>v.c180, c220:v=>v.c220, p:v=>v.p};
+  const valK={n:v=>v.n, eleg:v=>v.eleg.length, cart:v=>v.cart, c180:v=>v.c180, c220:v=>v.c220, l5:v=>v.l5, p:v=>v.p};
   V.sort((a,b)=>{ const A=valK[sortK](a), B=valK[sortK](b); return (A>B?1:A<B?-1:0)*sortD || a.c-b.c; });
   document.querySelectorAll('.th span[data-k]').forEach(s=>{ s.textContent=s.textContent.replace(/ [▲▼]$/,'')+(s.dataset.k===sortK? (sortD>0?' ▲':' ▼') : ''); });
   let h='';
   for(const v of V){ const ab=abiertos.has(v.c);
-    const L=v.eleg.map(k=>({cod:String(k[0]), rs:k[1], loc:k[3], dia:k[5], g180:comboCli.has(String(k[0])+'|180'), g220:comboCli.has(String(k[0])+'|220')}))
+    const L=v.eleg.map(k=>({cod:String(k[0]), rs:k[1], loc:k[3], dia:k[5], g180:comboCli.has(String(k[0])+'|180'), g220:comboCli.has(String(k[0])+'|220'), l5:L5.cli[String(k[0])]||0}))
       .filter(k=>!q || k.cod===q || (k.rs||'').toLowerCase().includes(q));
     if(q && !L.length) continue;
-    h+=`<div class="vrow${ab?' ab':''}" data-v="${v.c}" role="button" tabindex="0" aria-expanded="${ab}"><span class="chev">›</span><span class="vn"><span class="cod">${v.c}</span>${esc(v.n)}</span><span class="r"><b>${fmtN(v.eleg.length)}</b></span><span class="r m">${fmtN(v.cart)}</span><span class="r m"><b>${v.c180}</b></span><span class="r m"><b>${v.c220}</b></span><span class="m"><span class="bar"><i style="width:${v.p*100}%"></i></span>${fmtP(v.p)}</span></div>`;
+    h+=`<div class="vrow${ab?' ab':''}" data-v="${v.c}" role="button" tabindex="0" aria-expanded="${ab}"><span class="chev">›</span><span class="vn"><span class="cod">${v.c}</span>${esc(v.n)}</span><span class="r"><b>${fmtN(v.eleg.length)}</b></span><span class="r m">${fmtN(v.cart)}</span><span class="r m"><b>${v.c180}</b></span><span class="r m"><b>${v.c220}</b></span><span class="r m"><b>${fmtN(v.l5)}</b></span><span class="m"><span class="bar"><i style="width:${v.p*100}%"></i></span>${fmtP(v.p)}</span></div>`;
     if(ab){ L.sort((a,b)=>(+(a.g180||a.g220))-(+(b.g180||b.g220)) || (ORD_DIA[a.dia]||9)-(ORD_DIA[b.dia]||9) || a.cod.localeCompare(b.cod,undefined,{numeric:true}));
       const est=ok=>ok? '<span class="tag t-ok">Con combo</span>' : '<span class="tag t-pe">Pendiente</span>';
-      h+=`<div class="det"><table><thead><tr><th>Código</th><th>Razón social</th><th>Localidad</th><th>Día de visita</th>${fg!=='220'? '<th>Combo 180 g</th>' : ''}${fg!=='180'? '<th>Combo 220 g</th>' : ''}</tr></thead><tbody>${L.map(k=>`<tr><td><b>${esc(k.cod)}</b></td><td>${esc(titulo(k.rs))}</td><td>${esc(titulo(k.loc))}</td><td>${DIA[k.dia]||'—'}</td>${fg!=='220'? `<td>${est(k.g180)}</td>` : ''}${fg!=='180'? `<td>${est(k.g220)}</td>` : ''}</tr>`).join('')||'<tr><td colspan="6">Sin clientes.</td></tr>'}</tbody></table></div>`; }
+      h+=`<div class="det"><table><thead><tr><th>Código</th><th>Razón social</th><th>Localidad</th><th>Día de visita</th>${fg!=='220'? '<th>Combo 180 g</th>' : ''}${fg!=='180'? '<th>Combo 220 g</th>' : ''}<th class="r">Leche 5323</th></tr></thead><tbody>${L.map(k=>`<tr><td><b>${esc(k.cod)}</b></td><td>${esc(titulo(k.rs))}</td><td>${esc(titulo(k.loc))}</td><td>${DIA[k.dia]||'—'}</td>${fg!=='220'? `<td>${est(k.g180)}</td>` : ''}${fg!=='180'? `<td>${est(k.g220)}</td>` : ''}<td class="r">${k.l5? fmtN(k.l5) : '—'}</td></tr>`).join('')||'<tr><td colspan="7">Sin clientes.</td></tr>'}</tbody></table></div>`; }
   }
   $('filas').innerHTML=h||'<div class="vacio">Sin resultados.</div>';
 }
 function filtrarC(C,fv,fg,q){ return C.filter(c=>(!fv||String(c.v)===fv) && (!fg||c.g===fg) && (!q || c.cli===q || c.rs.toLowerCase().includes(q))); }
-function dibujarCombos(C,fv,fg,q){
+function dibujarCombos(C,fv,fg,q,L5){
   $('th').hidden=true;
   const L=filtrarC(C,fv,fg,q).sort((a,b)=>(a.est==='ok'?0:1)-(b.est==='ok'?0:1) || b.car.localeCompare(a.car) || a.v-b.v);
-  $('filas').innerHTML= L.length? `<div class="tcomb"><table><thead><tr><th>Fecha de carga</th><th>Comprobante</th><th>Vendedor</th><th>Cliente</th><th>Gramaje</th><th class="r">Vainilla</th><th class="r">Frutilla</th><th class="r">Sin cargo</th><th class="r">Costo unitario</th><th class="r">A reconocer</th><th>Estado</th></tr></thead><tbody>${L.map(c=>`<tr><td>${dmy(c.car)}</td><td>${esc(c.nro)}</td><td><span class="cod">${c.v}</span>${esc(NOMV[c.v]||'')}</td><td><b>${esc(c.cli)}</b> ${esc(titulo(c.rs))}</td><td>${c.g} g</td><td class="r">${fmtN(c.uv)}</td><td class="r">${fmtN(c.uf)}</td><td class="r">${c.sc.toLocaleString('es-AR',{maximumFractionDigits:1})}</td><td class="r">${fmt$(c.cu)}</td><td class="r"><b>${c.est==='ok'? fmt$(c.rec) : '—'}</b></td><td><span class="tag ${EST[c.est][0]}">${EST[c.est][1]}</span></td></tr>`).join('')}</tbody></table></div>`
+  $('filas').innerHTML= L.length? `<div class="tcomb"><table><thead><tr><th>Fecha de carga</th><th>Comprobante</th><th>Vendedor</th><th>Cliente</th><th>Gramaje</th><th class="r">Vainilla</th><th class="r">Frutilla</th><th class="r">Sin cargo</th><th class="r">Leche 5323</th><th class="r">Costo unitario</th><th class="r">A reconocer</th><th>Estado</th></tr></thead><tbody>${L.map(c=>`<tr><td>${dmy(c.car)}</td><td>${esc(c.nro)}</td><td><span class="cod">${c.v}</span>${esc(NOMV[c.v]||'')}</td><td><b>${esc(c.cli)}</b> ${esc(titulo(c.rs))}</td><td>${c.g} g</td><td class="r">${fmtN(c.uv)}</td><td class="r">${fmtN(c.uf)}</td><td class="r">${c.sc.toLocaleString('es-AR',{maximumFractionDigits:1})}</td><td class="r">${L5.venta[c.venta]? fmtN(L5.venta[c.venta]) : '—'}</td><td class="r">${fmt$(c.cu)}</td><td class="r"><b>${c.est==='ok'? fmt$(c.rec) : '—'}</b></td><td><span class="tag ${EST[c.est][0]}">${EST[c.est][1]}</span></td></tr>`).join('')}</tbody></table></div>`
     : '<div class="vacio">Todavía no hay pedidos con 2 Vainilla + 2 Frutilla del mismo gramaje desde el 19/10.</div>';
 }
 // archivo para el pago: en "Combos realizados" baja los combos; en "Clientes para el combo", la lista de clientes
 function descargar(){
-  const {yaCompro,C,comboCli}=calcular(), fv=$('fVend').value, fg=$('fGr').value, q=$('fCli').value.trim().toLowerCase(), sep=';', qq=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
+  const {yaCompro,C,comboCli,L5}=calcular(), fv=$('fVend').value, fg=$('fGr').value, q=$('fCli').value.trim().toLowerCase(), sep=';', qq=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
   let filas, nombre;
   if(modo==='comb'){
-    filas=[['Fecha de carga','Comprobante','Cod vendedor','Vendedor','Cod cliente','Razon social','Gramaje','Articulo','Unidades Vainilla','Unidades Frutilla','Unidades sin cargo','Costo unitario','A reconocer','Estado'].map(qq).join(sep)];
-    for(const c of filtrarC(C,fv,fg,q)) filas.push([dmy(c.car),c.nro,c.v,NOMV[c.v]||'',c.cli,titulo(c.rs),c.g+' g',GRAM[c.g].n,c.uv,c.uf,String(c.sc).replace('.',','),Math.round(c.cu*100)/100,c.est==='ok'? Math.round(c.rec*100)/100 : 0,EST[c.est][1]].map(qq).join(sep));
+    filas=[['Fecha de carga','Comprobante','Cod vendedor','Vendedor','Cod cliente','Razon social','Gramaje','Articulo','Unidades Vainilla','Unidades Frutilla','Unidades sin cargo','Leche 5323','Costo unitario','A reconocer','Estado'].map(qq).join(sep)];
+    for(const c of filtrarC(C,fv,fg,q)) filas.push([dmy(c.car),c.nro,c.v,NOMV[c.v]||'',c.cli,titulo(c.rs),c.g+' g',GRAM[c.g].n,c.uv,c.uf,String(c.sc).replace('.',','),L5.venta[c.venta]||0,Math.round(c.cu*100)/100,c.est==='ok'? Math.round(c.rec*100)/100 : 0,EST[c.est][1]].map(qq).join(sep));
     nombre=`combos-proteinas-ilolay-${HOY}.csv`;
   } else {
-    filas=[['Cod vendedor','Vendedor','Cod cliente','Razon social','Localidad','Dia de visita','Combo 180','Combo 220'].map(qq).join(sep)];
+    filas=[['Cod vendedor','Vendedor','Cod cliente','Razon social','Localidad','Dia de visita','Combo 180','Combo 220','Leche 5323 desde 19/10'].map(qq).join(sep)];
     for(const [c,lista] of Object.entries(CART.v)){ const cv=+c; if(!EQUIPO.has(cv) || (fv && c!==fv)) continue;
       for(const k of lista.filter(k=>!yaCompro.has(String(k[0])))){ const cod=String(k[0]); if(q && cod!==q && !(k[1]||'').toLowerCase().includes(q)) continue;
-        filas.push([cv,NOMV[cv]||'',cod,titulo(k[1]),titulo(k[3]),DIA[k[5]]||'',comboCli.has(cod+'|180')?'Si':'No',comboCli.has(cod+'|220')?'Si':'No'].map(qq).join(sep)); } }
+        filas.push([cv,NOMV[cv]||'',cod,titulo(k[1]),titulo(k[3]),DIA[k[5]]||'',comboCli.has(cod+'|180')?'Si':'No',comboCli.has(cod+'|220')?'Si':'No',L5.cli[cod]||0].map(qq).join(sep)); } }
     nombre=`clientes-combo-proteinas-${HOY}.csv`;
   }
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+filas.join('\r\n')],{type:'text/csv;charset=utf-8'}));
