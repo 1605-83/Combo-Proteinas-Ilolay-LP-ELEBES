@@ -39,18 +39,19 @@ button.dl{font:inherit;font-size:.88rem;padding:8px 14px;border:1px solid var(--
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px}
 @media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:560px){.kpis{grid-template-columns:1fr}}
-.kpi{padding:14px 22px;border-right:1px solid var(--line);min-width:0}.kpi:last-child{border-right:0}
-.kpi .l{font-size:.85rem;color:var(--ink2)}.kpi .v{font-size:1.6rem;font-weight:500;margin:6px 0 2px}.kpi .n{font-size:.82rem;color:var(--ink2)}
-.lista{margin-top:14px;overflow:hidden}
+.kpis{background:#111318;color:#fff}   /* indicadores en negro con letras blancas (pedido de Bruno, 20/10/2026) */
+.kpi{padding:14px 22px;border-right:1px solid #2E3138;min-width:0}.kpi:last-child{border-right:0}
+.kpi .l{font-size:.85rem;color:#D7D9DE}.kpi .v{font-size:1.6rem;font-weight:500;margin:6px 0 2px;color:#fff!important}.kpi .n{font-size:.82rem;color:#B9BCC4}
+.lista{margin-top:14px;overflow:hidden;background:#FFF1F6}   /* lista de vendedores en rosado claro */
 .th,.vrow{display:grid;grid-template-columns:30px minmax(150px,1fr) 64px 80px 80px 74px 74px 120px minmax(190px,1.3fr);gap:10px;align-items:center;padding:11px 18px}
-.th{font-size:.82rem;font-weight:700;background:#FAFAFA;border-bottom:1px solid var(--line)}
+.th{font-size:.82rem;font-weight:700;background:#FCE3EC;border-bottom:1px solid #F3CFDC}
 .th span{cursor:pointer;user-select:none}.r{text-align:right}
-.vrow{border-bottom:1px solid var(--line);cursor:pointer}.vrow:hover{background:#F6F9FF}
+.vrow{border-bottom:1px solid #F6DDE6;cursor:pointer}.vrow:hover{background:#FDE7EF}
 .chev{transition:transform .15s;color:#555;text-align:center}.vrow.ab .chev{transform:rotate(90deg)}
 .vn{font-weight:500}
 .cod{display:inline-block;min-width:2.3em;margin-right:8px;padding:1px 7px;border-radius:6px;background:#E6F0FF;color:var(--azul);font-size:.85em;font-weight:700;text-align:center}
 .bar{display:inline-block;width:60px;height:8px;border-radius:4px;background:#EEF0F3;overflow:hidden;vertical-align:middle;margin-right:8px}.bar i{display:block;height:100%;background:var(--verde)}
-.det{background:#FAFBFC;border-bottom:1px solid var(--line);padding:6px 18px 14px 48px;overflow-x:auto}
+.det{background:#FFF8FB;border-bottom:1px solid #F6DDE6;padding:6px 18px 14px 48px;overflow-x:auto}
 .det table,.tcomb table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:620px}
 .det th,.det td,.tcomb th,.tcomb td{padding:6px 8px;border-bottom:1px solid #EDEDED;text-align:left;white-space:nowrap}
 .det th,.tcomb th{font-size:.75rem;color:var(--ink2);text-transform:uppercase}
