@@ -82,14 +82,14 @@ footer{margin-top:16px;font-size:.78rem;color:var(--ink2);text-align:center;line
     <div class="th" id="th"><span></span><span data-k="n">Vendedor</span><span class="r" data-k="eleg">Para combo</span><span class="r" data-k="cart">Cartera</span><span class="r" data-k="c180">Combos 180</span><span class="r" data-k="c220">Combos 220</span><span data-k="p">% con combo</span></div>
     <div id="filas"></div>
   </div>
-  <footer>Vigencia 19/10 al 31/10/2026 (o hasta agotar la asignación) · Canal: todos · Combo: 2 Vainilla + 2 Frutilla del mismo gramaje y van 2 unidades sin cargo · 1 combo por cliente de cada gramaje (hasta 2 por cliente) · Para clientes que no compraron Proteína 180 (3570 / 3571) entre el 01/09 y el 18/10 · Reconocimiento por NC a costo distribuidor · Datos de la base de Gescom; lo cargado hoy se actualiza solo, sin recargar</footer>
+  <footer>Vigencia 19/10 al 31/10/2026 (o hasta agotar la asignación) · Canal: todos · Combo: 2 Vainilla + 2 Frutilla del mismo gramaje y van 2 unidades sin cargo · 1 combo por cliente de cada gramaje (hasta 2 por cliente) · Para clientes que no compraron 3570 / 3571 (Proteína 180) ni 5323 (leche Proteínas 1 L) entre el 01/09 y el 18/10 · Reconocimiento por NC a costo distribuidor · Datos de la base de Gescom; lo cargado hoy se actualiza solo, sin recargar</footer>
 </div>
 <script>
 const B='https://1605-83.github.io/Reporte-Diario-Ventas/', RAW='https://raw.githubusercontent.com/1605-83/Reporte-Diario-Ventas/main/';
 // ---- Reglas del combo (pedido de Bruno, 20/10/2026) ----
 const VIG_D='2026-10-19', VIG_H='2026-10-31';                 // vigencia, por fecha de carga del pedido
-const EXCL_D='2026-09-01', EXCL_H='2026-10-18';               // quien compro 3570 / 3571 en este periodo no entra
-const EXCL_COD=new Set(['3570','3571']);
+const EXCL_D='2026-09-01', EXCL_H='2026-10-18';               // quien compro 3570 / 3571 / 5323 en este periodo no entra (5323 agregado por Bruno, 20/10/2026)
+const EXCL_COD=new Set(['3570','3571','5323']);   // yogur batido Proteína 180 Frutilla y Vainilla, leche larga vida Proteínas 1 L
 const GRAM={'180':{v:'3571',f:'3570',n:'Yogur batido Proteína 180 g'}, '220':{v:'4531',f:'4530',n:'Tetratop Proteína 220 g'}};
 const COD_G={}; for(const g in GRAM){ COD_G[GRAM[g].v]=[g,'v']; COD_G[GRAM[g].f]=[g,'f']; }
 const EQUIPO=new Set([2,4,5,6,7,24,26,27,28,29,30,51,52,53,54,56,61,62,63,64,73,74,75]);   // vendedores del reporte, como en Clientes sin Softys
@@ -127,10 +127,10 @@ function leer(txt){
   return out;
 }
 
-// ---- Calculo: clientes que no compraron 3570 / 3571 entre el 01/09 y el 18/10, y combos cargados en la vigencia ----
+// ---- Calculo: clientes que no compraron 3570 / 3571 / 5323 entre el 01/09 y el 18/10, y combos cargados en la vigencia ----
 function calcular(){
   const F=[...MES.filter(x=>!(VIVO.length && x.car===HOY)), ...VIVO];
-  // compro proteina 180 antes de la vigencia: factura (o pedido) con unidades positivas de 3570 / 3571
+  // compro proteina 180 antes de la vigencia: factura (o pedido) con unidades positivas de 3570 / 3571 / 5323
   const yaCompro=new Set();
   for(const x of F){ if(!EXCL_COD.has(x.cod) || x.cant<=0 || x.tc==='NCR' || x.tc==='NDB') continue;
     const f= /^\d{4}-\d{2}-\d{2}$/.test(x.fc)? x.fc : x.car; if(f>=EXCL_D && f<=EXCL_H) yaCompro.add(x.cli); }
@@ -153,7 +153,7 @@ function calcular(){
     else { p.est='ok'; usado.add(p.cli+'|'+p.g); } }
   return {yaCompro, C, comboCli:usado};
 }
-const EST={ok:['t-ok','Válido'],no:['t-no','Ya compró 180 en sep/oct'],av:['t-av','Sin las 2 sin cargo'],rep:['t-pe','Repetido (ya tiene combo de este gramaje)']};
+const EST={ok:['t-ok','Válido'],no:['t-no','Ya compró proteína en sep/oct'],av:['t-av','Sin las 2 sin cargo'],rep:['t-pe','Repetido (ya tiene combo de este gramaje)']};
 
 function dibujar(){
   const {yaCompro,C,comboCli}=calcular();
@@ -173,7 +173,7 @@ function dibujar(){
     V.push({c:cv, n:NOMV[cv]||('Vendedor '+cv), cart:lista.length, eleg, c180:cv180, c220:cv220, cc:conCombo, p: eleg.length? conCombo/eleg.length : 0}); }
   const tEleg=V.reduce((a,v)=>a+v.eleg.length,0), tCart=V.reduce((a,v)=>a+v.cart,0);
   const sinB=C.filter(c=>c.est==='av'&&(!fv||String(c.v)===fv)).length;
-  $('kpis').innerHTML=`<div class="kpi"><div class="l">Clientes para el combo</div><div class="v" style="color:var(--marca)">${fmtN(tEleg)}</div><div class="n">${tCart? fmtP(tEleg/tCart) : '—'} de ${fmtN(tCart)} clientes de la cartera no compraron Proteína 180 en sep/oct</div></div>
+  $('kpis').innerHTML=`<div class="kpi"><div class="l">Clientes para el combo</div><div class="v" style="color:var(--marca)">${fmtN(tEleg)}</div><div class="n">${tCart? fmtP(tEleg/tCart) : '—'} de ${fmtN(tCart)} clientes de la cartera no compraron 3570, 3571 ni 5323 en sep/oct</div></div>
     <div class="kpi"><div class="l">Clientes con combo</div><div class="v" style="color:var(--verde)">${fmtN(cliCombo)}</div><div class="n">${fmtN(nVal)} combos válidos (${fmtN(n180)} de 180 g y ${fmtN(n220)} de 220 g)</div></div>
     <div class="kpi"><div class="l">A reconocer por NC</div><div class="v">${fmt$(rec)}</div><div class="n">2 unidades sin cargo por combo, a costo distribuidor</div></div>
     <div class="kpi"><div class="l">Para revisar</div><div class="v" style="color:${sinB||C.some(c=>c.est==='no')?'var(--ambar)':'var(--ink)'}">${fmtN(C.filter(c=>c.est!=='ok'&&(!fv||String(c.v)===fv)).length)}</div><div class="n">${fmtN(sinB)} sin las 2 sin cargo · ${fmtN(C.filter(c=>c.est==='no'&&(!fv||String(c.v)===fv)).length)} de clientes que ya compraban</div></div>`;
