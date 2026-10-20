@@ -89,18 +89,12 @@ footer{margin-top:16px;font-size:.78rem;color:var(--ink2);text-align:center;line
     </div>
   </div>
   <div class="card kpis" id="kpis"></div>
-  <div class="graf">
-    <div class="card gc gc-v"><h2>Combos por vendedor <small>tocá una barra para filtrar</small></h2><div class="cv"><canvas id="gV" role="img" aria-label="Combos vendidos por vendedor, 180 g y 220 g"></canvas></div><div class="gvac" id="gVvac" hidden>Todavía no hay combos desde el 21/10</div></div>
-    <div class="card gc"><h2>Combos por día</h2><div class="cv"><canvas id="gD" role="img" aria-label="Combos vendidos por día de carga, 180 g y 220 g"></canvas></div></div>
-    <div class="card gc"><h2>Estado de los combos <small>tocá para ver el detalle</small></h2><div class="cv"><canvas id="gE" role="img" aria-label="Combos por estado"></canvas><div class="ctr" id="gEc"></div></div></div>
-  </div>
   <div class="card lista" id="lista">
     <div class="th" id="th"><span></span><span data-k="n">Vendedor</span><span class="r" data-k="eleg">Para combo</span><span class="r" data-k="cart">Cartera</span><span class="r" data-k="c180">Combos 180</span><span class="r" data-k="c220">Combos 220</span><span class="r" data-k="l5" title="Unidades de Leche larga vida Proteínas 1 L (5323) vendidas desde el 21/10">Leche 5323</span><span class="r" data-k="n3" title="Unidades de Yogur Natural PD x 350 g (3670) vendidas desde el 21/10">Natural 350</span><span data-k="p">% con combo</span><span data-k="vend" title="Pedidos con 2 Vainilla + 2 Frutilla del mismo gramaje desde el 21/10, válidos o no, y a qué cliente">Combos vendidos</span></div>
     <div id="filas"></div>
   </div>
   <footer>Vigencia 19/10 al 31/10/2026 (o hasta agotar la asignación) · Canal: todos · Combo: 2 Vainilla + 2 Frutilla del mismo gramaje y van 2 unidades sin cargo · 1 combo por cliente de cada gramaje (hasta 2 por cliente) · Para clientes que no compraron 3570 / 3571 (Proteína 180), 5323 (leche Proteínas 1 L) ni 3670 (Natural 350 g) entre el 01/09 y el 20/10 · Los combos se cuentan desde el 21/10 · Reconocimiento por NC a costo distribuidor · Datos de la base de Gescom; lo cargado hoy se actualiza solo, sin recargar</footer>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 const B='https://1605-83.github.io/Reporte-Diario-Ventas/', RAW='https://raw.githubusercontent.com/1605-83/Reporte-Diario-Ventas/main/';
 // ---- Reglas del combo (pedido de Bruno, 20/10/2026) ----
@@ -200,7 +194,6 @@ function dibujar(){
     <div class="kpi"><div class="l">Clientes con combo</div><div class="v" style="color:var(--verde)">${fmtN(cliCombo)}</div><div class="n">${fmtN(nVal)} combos válidos (${fmtN(n180)} de 180 g y ${fmtN(n220)} de 220 g)</div></div>
     <div class="kpi"><div class="l">Combos vendidos</div><div class="v">${fmtN(Cf.length)}</div><div class="n">pedidos con 2 Vainilla + 2 Frutilla desde el 21/10 · ${fmtN(Cf.filter(c=>c.g==='180').length)} de 180 g y ${fmtN(Cf.filter(c=>c.g==='220').length)} de 220 g</div></div>
     <div class="kpi"><div class="l">Para revisar</div><div class="v" style="color:${sinB||C.some(c=>c.est==='no')?'var(--ambar)':'var(--ink)'}">${fmtN(C.filter(c=>c.est!=='ok'&&(!fv||String(c.v)===fv)).length)}</div><div class="n">${fmtN(sinB)} sin las 2 sin cargo · ${fmtN(C.filter(c=>c.est==='no'&&(!fv||String(c.v)===fv)).length)} de clientes que ya compraban</div></div>`;
-  graficos(C,fv,fg);
   if(modo==='comb') return dibujarCombos(C,fv,fg,q,L5,N3);
   $('th').hidden=false;
   const valK={n:v=>v.n, eleg:v=>v.eleg.length, cart:v=>v.cart, c180:v=>v.c180, c220:v=>v.c220, l5:v=>v.l5, n3:v=>v.n3, vend:v=>v.vend.length, p:v=>v.p};
@@ -224,50 +217,6 @@ function dibujarCombos(C,fv,fg,q,L5,N3){
   const L=filtrarC(C,fv,fg,q).sort((a,b)=>(a.est==='ok'?0:1)-(b.est==='ok'?0:1) || b.car.localeCompare(a.car) || a.v-b.v);
   $('filas').innerHTML= L.length? `<div class="tcomb"><table><thead><tr><th>Fecha de carga</th><th>Comprobante</th><th>Vendedor</th><th>Cliente</th><th>Gramaje</th><th class="r">Vainilla</th><th class="r">Frutilla</th><th class="r">Sin cargo</th><th class="r">Leche 5323</th><th class="r">Natural 350</th><th>Estado</th></tr></thead><tbody>${L.map(c=>`<tr><td>${dmy(c.car)}</td><td>${esc(c.nro)}</td><td><span class="cod">${c.v}</span>${esc(NOMV[c.v]||'')}</td><td><b>${esc(c.cli)}</b> ${esc(titulo(c.rs))}</td><td>${c.g} g</td><td class="r">${fmtN(c.uv)}</td><td class="r">${fmtN(c.uf)}</td><td class="r">${c.sc.toLocaleString('es-AR',{maximumFractionDigits:1})}</td><td class="r">${L5.venta[c.venta]? fmtN(L5.venta[c.venta]) : '—'}</td><td class="r">${N3.venta[c.venta]? fmtN(N3.venta[c.venta]) : '—'}</td><td><span class="tag ${EST[c.est][0]}">${EST[c.est][1]}</span></td></tr>`).join('')}</tbody></table></div>`
     : '<div class="vacio">Todavía no hay pedidos con 2 Vainilla + 2 Frutilla del mismo gramaje desde el 21/10.</div>';
-}
-// ---- Graficos interactivos (pedido de Bruno, 20/10/2026): por vendedor (tocar filtra), por dia de carga y por estado ----
-const COLG={'180':'#0E5A9C','220':'#6FB1E6'}, COLE={ok:'#2E8B4E',av:'#D69E2E',no:'#C0392B',rep:'#9AA1AB'};
-let gV=null, gD=null, gE=null;
-function graficos(C,fv,fg){
-  if(!window.Chart) return;
-  Chart.defaults.font.family='Roboto,system-ui,sans-serif'; Chart.defaults.color='#6B7280';
-  const Cg=C.filter(c=>!fg||c.g===fg), gs= fg? [fg] : ['180','220'];
-  const tip={backgroundColor:'#1F2328',padding:10,boxPadding:4,usePointStyle:true};
-  // combos por vendedor: se ven todos los vendedores con combos (el elegido resalta) para poder pasar de uno a otro
-  const porV={}; for(const c of Cg){ const p=porV[c.v]||(porV[c.v]={'180':0,'220':0}); p[c.g]++; }
-  const vs=Object.keys(porV).map(Number).sort((a,b)=>(porV[b]['180']+porV[b]['220'])-(porV[a]['180']+porV[a]['220'])||a-b);
-  const alfa=(col,v)=> !fv||String(v)===fv? col : col+'45';
-  $('gVvac').hidden=vs.length>0;
-  if(!gV) gV=new Chart($('gV'),{type:'bar',data:{labels:[],datasets:[]},options:{maintainAspectRatio:false,animation:{duration:250},
-    scales:{x:{stacked:true,grid:{display:false},ticks:{autoSkip:false,maxRotation:50,font:{size:10}}},y:{stacked:true,beginAtZero:true,ticks:{precision:0},grid:{color:'#EEF0F3'},border:{display:false}}},
-    plugins:{legend:{position:'bottom',labels:{boxWidth:10,boxHeight:10}},tooltip:{...tip,callbacks:{title:it=>{ const v=gV.$vs[it[0].dataIndex]; return v+' · '+(NOMV[v]||''); },
-      label:it=>` ${it.dataset.label}: ${it.raw} combo${it.raw===1?'':'s'}`,
-      footer:it=>{ const v=gV.$vs[it[0].dataIndex], ok=gV.$C.filter(c=>c.v===v&&c.est==='ok').length; return ok+' válido'+(ok===1?'':'s')+' · tocá para '+($('fVend').value===String(v)?'ver todos':'filtrar'); }}}},
-    onHover:(e,els)=>{ e.native.target.style.cursor=els.length?'pointer':'default'; },
-    onClick:(e,els)=>{ if(!els.length) return; const v=String(gV.$vs[els[0].index]); $('fVend').value= $('fVend').value===v? '' : v; dibujar(); }}});
-  gV.$vs=vs; gV.$C=Cg; gV.data.labels=vs.map(v=>String(v).padStart(2,'0')+' '+((NOMV[v]||'').split(' ')[0]||''));
-  gV.data.datasets=gs.map(g=>({label:g+' g',data:vs.map(v=>porV[v][g]),backgroundColor:vs.map(v=>alfa(COLG[g],v)),borderRadius:3,maxBarThickness:34,stack:'s'}));
-  gV.update();
-  // combos por dia de carga, de lunes a sabado de la vigencia que cuenta (21/10 al 31/10)
-  const Cv=Cg.filter(c=>!fv||String(c.v)===fv), dias=[];
-  for(let d=new Date(VIG_D+'T12:00'); d.toISOString().slice(0,10)<=VIG_H; d.setDate(d.getDate()+1)) if(d.getDay()!==0) dias.push(d.toISOString().slice(0,10));
-  const porD={}; for(const c of Cv){ const p=porD[c.car]||(porD[c.car]={'180':0,'220':0}); p[c.g]++; }
-  if(!gD) gD=new Chart($('gD'),{type:'bar',data:{labels:[],datasets:[]},options:{maintainAspectRatio:false,animation:{duration:250},
-    scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true,suggestedMax:4,ticks:{precision:0},grid:{color:'#EEF0F3'},border:{display:false}}},
-    plugins:{legend:{position:'bottom',labels:{boxWidth:10,boxHeight:10}},tooltip:{...tip,callbacks:{title:it=>{ const s=gD.$dias[it[0].dataIndex]; return new Date(s+'T12:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'numeric'})+(s>HOY?' (por venir)':''); },
-      label:it=>` ${it.dataset.label}: ${it.raw} combo${it.raw===1?'':'s'}`}}}}});
-  gD.$dias=dias; gD.data.labels=dias.map(s=>s.slice(8)+'/'+s.slice(5,7));
-  gD.data.datasets=gs.map(g=>({label:g+' g',data:dias.map(s=>(porD[s]||{})[g]||0),backgroundColor:dias.map(s=>s===HOY? COLG[g] : s>HOY? COLG[g]+'30' : COLG[g]+'C0'),borderRadius:3,maxBarThickness:28,stack:'s'}));
-  gD.update();
-  // estado de los combos (tocar abre la vista de combos realizados)
-  const ests=['ok','av','no','rep'], cnt=ests.map(k=>Cv.filter(c=>c.est===k).length);
-  if(!gE) gE=new Chart($('gE'),{type:'doughnut',data:{labels:ests.map(k=>EST[k][1]),datasets:[{data:[],backgroundColor:ests.map(k=>COLE[k]),borderColor:'#fff',borderWidth:2,hoverOffset:6}]},
-    options:{maintainAspectRatio:false,cutout:'62%',animation:{duration:250},plugins:{legend:{position:'bottom',labels:{boxWidth:10,boxHeight:10,font:{size:11}}},
-      tooltip:{...tip,callbacks:{label:it=>{ const t=it.dataset.data.reduce((a,b)=>a+b,0); return ` ${it.label}: ${it.raw}${t? ' ('+Math.round(it.raw/t*100)+'%)' : ''}`; }}}},
-    onHover:(e,els)=>{ e.native.target.style.cursor=els.length?'pointer':'default'; },
-    onClick:(e,els)=>{ if(!els.length) return; modo='comb'; document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('sel',b.dataset.m==='comb')); dibujar(); $('lista').scrollIntoView({behavior:'smooth'}); }}});
-  gE.data.datasets[0].data=cnt; gE.update();
-  const tot=cnt.reduce((a,b)=>a+b,0); $('gEc').innerHTML=`<div><b>${fmtN(tot)}</b><span>combo${tot===1?'':'s'}</span></div>`;
 }
 document.addEventListener('click',e=>{
   const s=e.target.closest('.seg button'); if(s){ modo=s.dataset.m; document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('sel',b===s)); dibujar(); return; }
