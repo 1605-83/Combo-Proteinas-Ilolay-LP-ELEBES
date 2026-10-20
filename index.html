@@ -84,16 +84,16 @@ footer{margin-top:16px;font-size:.78rem;color:var(--ink2);text-align:center;line
   </div>
   <div class="card kpis" id="kpis"></div>
   <div class="card lista" id="lista">
-    <div class="th" id="th"><span></span><span data-k="n">Vendedor</span><span class="r" data-k="eleg">Para combo</span><span class="r" data-k="cart">Cartera</span><span class="r" data-k="c180">Combos 180</span><span class="r" data-k="c220">Combos 220</span><span class="r" data-k="l5" title="Unidades de Leche larga vida Proteínas 1 L (5323) vendidas desde el 19/10">Leche 5323</span><span data-k="p">% con combo</span><span data-k="vend" title="Pedidos con 2 Vainilla + 2 Frutilla del mismo gramaje desde el 19/10, válidos o no, y a qué cliente">Combos vendidos</span></div>
+    <div class="th" id="th"><span></span><span data-k="n">Vendedor</span><span class="r" data-k="eleg">Para combo</span><span class="r" data-k="cart">Cartera</span><span class="r" data-k="c180">Combos 180</span><span class="r" data-k="c220">Combos 220</span><span class="r" data-k="l5" title="Unidades de Leche larga vida Proteínas 1 L (5323) vendidas desde el 21/10">Leche 5323</span><span data-k="p">% con combo</span><span data-k="vend" title="Pedidos con 2 Vainilla + 2 Frutilla del mismo gramaje desde el 21/10, válidos o no, y a qué cliente">Combos vendidos</span></div>
     <div id="filas"></div>
   </div>
-  <footer>Vigencia 19/10 al 31/10/2026 (o hasta agotar la asignación) · Canal: todos · Combo: 2 Vainilla + 2 Frutilla del mismo gramaje y van 2 unidades sin cargo · 1 combo por cliente de cada gramaje (hasta 2 por cliente) · Para clientes que no compraron 3570 / 3571 (Proteína 180) ni 5323 (leche Proteínas 1 L) entre el 01/09 y el 18/10 · Reconocimiento por NC a costo distribuidor · Datos de la base de Gescom; lo cargado hoy se actualiza solo, sin recargar</footer>
+  <footer>Vigencia 19/10 al 31/10/2026 (o hasta agotar la asignación) · Canal: todos · Combo: 2 Vainilla + 2 Frutilla del mismo gramaje y van 2 unidades sin cargo · 1 combo por cliente de cada gramaje (hasta 2 por cliente) · Para clientes que no compraron 3570 / 3571 (Proteína 180) ni 5323 (leche Proteínas 1 L) entre el 01/09 y el 20/10 · Los combos se cuentan desde el 21/10 · Reconocimiento por NC a costo distribuidor · Datos de la base de Gescom; lo cargado hoy se actualiza solo, sin recargar</footer>
 </div>
 <script>
 const B='https://1605-83.github.io/Reporte-Diario-Ventas/', RAW='https://raw.githubusercontent.com/1605-83/Reporte-Diario-Ventas/main/';
 // ---- Reglas del combo (pedido de Bruno, 20/10/2026) ----
-const VIG_D='2026-10-19', VIG_H='2026-10-31';                 // vigencia, por fecha de carga del pedido
-const EXCL_D='2026-09-01', EXCL_H='2026-10-18';               // quien compro 3570 / 3571 / 5323 en este periodo no entra (5323 agregado por Bruno, 20/10/2026)
+const VIG_D='2026-10-21', VIG_H='2026-10-31';                 // combos que se cuentan, por fecha de carga del pedido (desde el 21/10, pedido de Bruno 20/10/2026; la vigencia oficial arranca el 19/10)
+const EXCL_D='2026-09-01', EXCL_H='2026-10-20';               // quien compro 3570 / 3571 / 5323 en este periodo no entra (5323 agregado por Bruno, 20/10/2026)
 const EXCL_COD=new Set(['3570','3571','5323']);   // yogur batido Proteína 180 Frutilla y Vainilla, leche larga vida Proteínas 1 L
 const COD_LECHE='5323';
 const GRAM={'180':{v:'3571',f:'3570',n:'Yogur batido Proteína 180 g'}, '220':{v:'4531',f:'4530',n:'Tetratop Proteína 220 g'}};
@@ -133,7 +133,7 @@ function leer(txt){
   return out;
 }
 
-// ---- Calculo: clientes que no compraron 3570 / 3571 / 5323 entre el 01/09 y el 18/10, y combos cargados en la vigencia ----
+// ---- Calculo: clientes que no compraron 3570 / 3571 / 5323 entre el 01/09 y el 20/10, y combos cargados en la vigencia ----
 function calcular(){
   const F=[...MES.filter(x=>!(VIVO.length && x.car===HOY)), ...VIVO];
   // compro proteina 180 antes de la vigencia: factura (o pedido) con unidades positivas de 3570 / 3571 / 5323
@@ -172,7 +172,7 @@ function dibujar(){
   const n180=val.filter(c=>c.g==='180').length, n220=val.filter(c=>c.g==='220').length, nVal=val.length;
   const rec=val.reduce((a,c)=>a+c.rec,0), cliCombo=new Set(val.map(c=>c.cli)).size;
   const quedan=Math.max(0, Math.round((new Date(VIG_H+'T23:59')-new Date(HOY+'T00:00'))/864e5));
-  $('meta').textContent=`Vigencia 19/10 al 31/10/2026 · ${HOY>VIG_H? 'terminada' : `quedan ${quedan} día${quedan===1?'':'s'}`} · ventas al ${vivoCorte||corteMes}`;
+  $('meta').textContent=`Vigencia 19/10 al 31/10/2026 · combos desde el 21/10 · ${HOY>VIG_H? 'terminada' : `quedan ${quedan} día${quedan===1?'':'s'}`} · ventas al ${vivoCorte||corteMes}`;
   $('cobEq').innerHTML=`<div class="l">Combos válidos</div><div class="v">${fmtN(nVal)}${tope? ` <span style="font-size:.9rem;font-weight:500">de ${fmtN(tope)}</span>` : ''}</div><div class="n">${fmtN(n180)} de 180 g · ${fmtN(n220)} de 220 g${tope? ` · quedan ${fmtN(Math.max(tope-nVal,0))}` : ' · cargá el tope de la DI'}</div>${tope? `<div class="tb"><i style="width:${Math.min(nVal/tope,1)*100}%"></i></div>` : ''}`;
   // por vendedor
   const V=[];
@@ -209,7 +209,7 @@ function dibujarCombos(C,fv,fg,q,L5){
   $('th').hidden=true;
   const L=filtrarC(C,fv,fg,q).sort((a,b)=>(a.est==='ok'?0:1)-(b.est==='ok'?0:1) || b.car.localeCompare(a.car) || a.v-b.v);
   $('filas').innerHTML= L.length? `<div class="tcomb"><table><thead><tr><th>Fecha de carga</th><th>Comprobante</th><th>Vendedor</th><th>Cliente</th><th>Gramaje</th><th class="r">Vainilla</th><th class="r">Frutilla</th><th class="r">Sin cargo</th><th class="r">Leche 5323</th><th class="r">Costo unitario</th><th class="r">A reconocer</th><th>Estado</th></tr></thead><tbody>${L.map(c=>`<tr><td>${dmy(c.car)}</td><td>${esc(c.nro)}</td><td><span class="cod">${c.v}</span>${esc(NOMV[c.v]||'')}</td><td><b>${esc(c.cli)}</b> ${esc(titulo(c.rs))}</td><td>${c.g} g</td><td class="r">${fmtN(c.uv)}</td><td class="r">${fmtN(c.uf)}</td><td class="r">${c.sc.toLocaleString('es-AR',{maximumFractionDigits:1})}</td><td class="r">${L5.venta[c.venta]? fmtN(L5.venta[c.venta]) : '—'}</td><td class="r">${fmt$(c.cu)}</td><td class="r"><b>${c.est==='ok'? fmt$(c.rec) : '—'}</b></td><td><span class="tag ${EST[c.est][0]}">${EST[c.est][1]}</span></td></tr>`).join('')}</tbody></table></div>`
-    : '<div class="vacio">Todavía no hay pedidos con 2 Vainilla + 2 Frutilla del mismo gramaje desde el 19/10.</div>';
+    : '<div class="vacio">Todavía no hay pedidos con 2 Vainilla + 2 Frutilla del mismo gramaje desde el 21/10.</div>';
 }
 // archivo para el pago: en "Combos realizados" baja los combos; en "Clientes para el combo", la lista de clientes
 function descargar(){
@@ -220,7 +220,7 @@ function descargar(){
     for(const c of filtrarC(C,fv,fg,q)) filas.push([dmy(c.car),c.nro,c.v,NOMV[c.v]||'',c.cli,titulo(c.rs),c.g+' g',GRAM[c.g].n,c.uv,c.uf,String(c.sc).replace('.',','),L5.venta[c.venta]||0,Math.round(c.cu*100)/100,c.est==='ok'? Math.round(c.rec*100)/100 : 0,EST[c.est][1]].map(qq).join(sep));
     nombre=`combos-proteinas-ilolay-${HOY}.csv`;
   } else {
-    filas=[['Cod vendedor','Vendedor','Cod cliente','Razon social','Localidad','Dia de visita','Combo 180','Combo 220','Leche 5323 desde 19/10'].map(qq).join(sep)];
+    filas=[['Cod vendedor','Vendedor','Cod cliente','Razon social','Localidad','Dia de visita','Combo 180','Combo 220','Leche 5323 desde 21/10'].map(qq).join(sep)];
     for(const [c,lista] of Object.entries(CART.v)){ const cv=+c; if(!EQUIPO.has(cv) || (fv && c!==fv)) continue;
       for(const k of lista.filter(k=>!yaCompro.has(String(k[0])))){ const cod=String(k[0]); if(q && cod!==q && !(k[1]||'').toLowerCase().includes(q)) continue;
         filas.push([cv,NOMV[cv]||'',cod,titulo(k[1]),titulo(k[3]),DIA[k[5]]||'',comboCli.has(cod+'|180')?'Si':'No',comboCli.has(cod+'|220')?'Si':'No',L5.cli[cod]||0].map(qq).join(sep)); } }
