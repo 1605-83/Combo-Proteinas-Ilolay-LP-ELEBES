@@ -42,7 +42,7 @@ button.dl{font:inherit;font-size:.88rem;padding:8px 14px;border:1px solid var(--
 .kpi{padding:14px 22px;border-right:1px solid var(--line);min-width:0}.kpi:last-child{border-right:0}
 .kpi .l{font-size:.85rem;color:var(--ink2)}.kpi .v{font-size:1.6rem;font-weight:500;margin:6px 0 2px}.kpi .n{font-size:.82rem;color:var(--ink2)}
 .lista{margin-top:14px;overflow:hidden}
-.th,.vrow{display:grid;grid-template-columns:30px minmax(150px,1fr) 90px 90px 90px 90px 90px 150px;gap:10px;align-items:center;padding:11px 18px}
+.th,.vrow{display:grid;grid-template-columns:30px minmax(150px,1fr) 80px 70px 80px 80px 80px 130px minmax(200px,1.3fr);gap:10px;align-items:center;padding:11px 18px}
 .th{font-size:.82rem;font-weight:700;background:#FAFAFA;border-bottom:1px solid var(--line)}
 .th span{cursor:pointer;user-select:none}.r{text-align:right}
 .vrow{border-bottom:1px solid var(--line);cursor:pointer}.vrow:hover{background:#F6F9FF}
@@ -58,6 +58,11 @@ button.dl{font:inherit;font-size:.88rem;padding:8px 14px;border:1px solid var(--
 .tcomb td.r,.tcomb th.r,.det td.r,.det th.r{text-align:right}
 .tag{display:inline-block;font-size:.76rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
 .t-ok{background:#E3F4E8;color:var(--verde)}.t-no{background:#FDECEA;color:var(--rojo)}.t-av{background:#FFF4DE;color:var(--ambar)}.t-pe{background:#EEF0F3;color:var(--ink2)}
+.vend{font-size:.8rem;color:var(--ink2);line-height:1.35;min-width:0}
+.vend b{color:var(--ink);font-size:.9rem}
+.vend .cl{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vend .cl i{font-style:normal;font-weight:700;margin-left:4px}
+.vend .ok{color:var(--verde)}.vend .av{color:var(--ambar)}.vend .no{color:var(--rojo)}.vend .rep{color:var(--ink2)}
 .vacio{padding:30px;text-align:center;color:var(--ink2)}
 @media (max-width:760px){.th{display:none}.vrow{grid-template-columns:22px 1fr auto}.vrow .m{display:none}.det{padding-left:10px}}
 footer{margin-top:16px;font-size:.78rem;color:var(--ink2);text-align:center;line-height:1.5}
@@ -79,7 +84,7 @@ footer{margin-top:16px;font-size:.78rem;color:var(--ink2);text-align:center;line
   </div>
   <div class="card kpis" id="kpis"></div>
   <div class="card lista" id="lista">
-    <div class="th" id="th"><span></span><span data-k="n">Vendedor</span><span class="r" data-k="eleg">Para combo</span><span class="r" data-k="cart">Cartera</span><span class="r" data-k="c180">Combos 180</span><span class="r" data-k="c220">Combos 220</span><span class="r" data-k="l5" title="Unidades de Leche larga vida Proteínas 1 L (5323) vendidas desde el 19/10">Leche 5323</span><span data-k="p">% con combo</span></div>
+    <div class="th" id="th"><span></span><span data-k="n">Vendedor</span><span class="r" data-k="eleg">Para combo</span><span class="r" data-k="cart">Cartera</span><span class="r" data-k="c180">Combos 180</span><span class="r" data-k="c220">Combos 220</span><span class="r" data-k="l5" title="Unidades de Leche larga vida Proteínas 1 L (5323) vendidas desde el 19/10">Leche 5323</span><span data-k="p">% con combo</span><span data-k="vend" title="Pedidos con 2 Vainilla + 2 Frutilla del mismo gramaje desde el 19/10, válidos o no, y a qué cliente">Combos vendidos</span></div>
     <div id="filas"></div>
   </div>
   <footer>Vigencia 19/10 al 31/10/2026 (o hasta agotar la asignación) · Canal: todos · Combo: 2 Vainilla + 2 Frutilla del mismo gramaje y van 2 unidades sin cargo · 1 combo por cliente de cada gramaje (hasta 2 por cliente) · Para clientes que no compraron 3570 / 3571 (Proteína 180) ni 5323 (leche Proteínas 1 L) entre el 01/09 y el 18/10 · Reconocimiento por NC a costo distribuidor · Datos de la base de Gescom; lo cargado hoy se actualiza solo, sin recargar</footer>
@@ -175,7 +180,7 @@ function dibujar(){
     const eleg=lista.filter(k=>!yaCompro.has(String(k[0])));
     const cv180=val.filter(x=>x.v===cv && x.g==='180').length, cv220=val.filter(x=>x.v===cv && x.g==='220').length;
     const conCombo=eleg.filter(k=>[...['180','220']].some(g=>(!fg||fg===g) && comboCli.has(String(k[0])+'|'+g))).length;
-    V.push({c:cv, n:NOMV[cv]||('Vendedor '+cv), cart:lista.length, eleg, c180:cv180, c220:cv220, l5:L5.v[cv]||0, cc:conCombo, p: eleg.length? conCombo/eleg.length : 0}); }
+    V.push({c:cv, n:NOMV[cv]||('Vendedor '+cv), cart:lista.length, eleg, c180:cv180, c220:cv220, l5:L5.v[cv]||0, vend:C.filter(x=>x.v===cv && (!fg||x.g===fg)), cc:conCombo, p: eleg.length? conCombo/eleg.length : 0}); }
   const tEleg=V.reduce((a,v)=>a+v.eleg.length,0), tCart=V.reduce((a,v)=>a+v.cart,0);
   const sinB=C.filter(c=>c.est==='av'&&(!fv||String(c.v)===fv)).length;
   $('kpis').innerHTML=`<div class="kpi"><div class="l">Clientes para el combo</div><div class="v" style="color:var(--marca)">${fmtN(tEleg)}</div><div class="n">${tCart? fmtP(tEleg/tCart) : '—'} de ${fmtN(tCart)} clientes de la cartera no compraron 3570, 3571 ni 5323 en sep/oct</div></div>
@@ -184,7 +189,7 @@ function dibujar(){
     <div class="kpi"><div class="l">Para revisar</div><div class="v" style="color:${sinB||C.some(c=>c.est==='no')?'var(--ambar)':'var(--ink)'}">${fmtN(C.filter(c=>c.est!=='ok'&&(!fv||String(c.v)===fv)).length)}</div><div class="n">${fmtN(sinB)} sin las 2 sin cargo · ${fmtN(C.filter(c=>c.est==='no'&&(!fv||String(c.v)===fv)).length)} de clientes que ya compraban</div></div>`;
   if(modo==='comb') return dibujarCombos(C,fv,fg,q,L5);
   $('th').hidden=false;
-  const valK={n:v=>v.n, eleg:v=>v.eleg.length, cart:v=>v.cart, c180:v=>v.c180, c220:v=>v.c220, l5:v=>v.l5, p:v=>v.p};
+  const valK={n:v=>v.n, eleg:v=>v.eleg.length, cart:v=>v.cart, c180:v=>v.c180, c220:v=>v.c220, l5:v=>v.l5, vend:v=>v.vend.length, p:v=>v.p};
   V.sort((a,b)=>{ const A=valK[sortK](a), B=valK[sortK](b); return (A>B?1:A<B?-1:0)*sortD || a.c-b.c; });
   document.querySelectorAll('.th span[data-k]').forEach(s=>{ s.textContent=s.textContent.replace(/ [▲▼]$/,'')+(s.dataset.k===sortK? (sortD>0?' ▲':' ▼') : ''); });
   let h='';
@@ -192,7 +197,7 @@ function dibujar(){
     const L=v.eleg.map(k=>({cod:String(k[0]), rs:k[1], loc:k[3], dia:k[5], g180:comboCli.has(String(k[0])+'|180'), g220:comboCli.has(String(k[0])+'|220'), l5:L5.cli[String(k[0])]||0}))
       .filter(k=>!q || k.cod===q || (k.rs||'').toLowerCase().includes(q));
     if(q && !L.length) continue;
-    h+=`<div class="vrow${ab?' ab':''}" data-v="${v.c}" role="button" tabindex="0" aria-expanded="${ab}"><span class="chev">›</span><span class="vn"><span class="cod">${v.c}</span>${esc(v.n)}</span><span class="r"><b>${fmtN(v.eleg.length)}</b></span><span class="r m">${fmtN(v.cart)}</span><span class="r m"><b>${v.c180}</b></span><span class="r m"><b>${v.c220}</b></span><span class="r m"><b>${fmtN(v.l5)}</b></span><span class="m"><span class="bar"><i style="width:${v.p*100}%"></i></span>${fmtP(v.p)}</span></div>`;
+    h+=`<div class="vrow${ab?' ab':''}" data-v="${v.c}" role="button" tabindex="0" aria-expanded="${ab}"><span class="chev">›</span><span class="vn"><span class="cod">${v.c}</span>${esc(v.n)}</span><span class="r"><b>${fmtN(v.eleg.length)}</b></span><span class="r m">${fmtN(v.cart)}</span><span class="r m"><b>${v.c180}</b></span><span class="r m"><b>${v.c220}</b></span><span class="r m"><b>${fmtN(v.l5)}</b></span><span class="m"><span class="bar"><i style="width:${v.p*100}%"></i></span>${fmtP(v.p)}</span><span class="vend m">${v.vend.length? `<b>${v.vend.length} combo${v.vend.length>1?'s':''}</b> · ${v.vend.filter(x=>x.est==='ok').length} válido${v.vend.filter(x=>x.est==='ok').length===1?'':'s'}${v.vend.map(x=>`<span class="cl" title="${esc(x.cli+' '+titulo(x.rs))} · ${x.g} g · ${dmy(x.car)} · ${EST[x.est][1]}">${esc(x.cli)} ${esc(titulo(x.rs))}<i class="${x.est}">${x.g}</i></span>`).join('')}` : '—'}</span></div>`;
     if(ab){ L.sort((a,b)=>(+(a.g180||a.g220))-(+(b.g180||b.g220)) || (ORD_DIA[a.dia]||9)-(ORD_DIA[b.dia]||9) || a.cod.localeCompare(b.cod,undefined,{numeric:true}));
       const est=ok=>ok? '<span class="tag t-ok">Con combo</span>' : '<span class="tag t-pe">Pendiente</span>';
       h+=`<div class="det"><table><thead><tr><th>Código</th><th>Razón social</th><th>Localidad</th><th>Día de visita</th>${fg!=='220'? '<th>Combo 180 g</th>' : ''}${fg!=='180'? '<th>Combo 220 g</th>' : ''}<th class="r">Leche 5323</th></tr></thead><tbody>${L.map(k=>`<tr><td><b>${esc(k.cod)}</b></td><td>${esc(titulo(k.rs))}</td><td>${esc(titulo(k.loc))}</td><td>${DIA[k.dia]||'—'}</td>${fg!=='220'? `<td>${est(k.g180)}</td>` : ''}${fg!=='180'? `<td>${est(k.g220)}</td>` : ''}<td class="r">${k.l5? fmtN(k.l5) : '—'}</td></tr>`).join('')||'<tr><td colspan="7">Sin clientes.</td></tr>'}</tbody></table></div>`; }
