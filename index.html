@@ -15,7 +15,7 @@
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Roboto,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-variant-numeric:tabular-nums;line-height:1.35}
 .wrap{max-width:1300px;margin:0 auto;padding:20px 16px 40px}
 .card{background:var(--card);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 22px;border-top:5px solid var(--marca)}
+.head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 22px;border:3px solid #111318;border-top:6px solid var(--marca)}   /* borde negro (pedido de Bruno) */
 .head h1{margin:0;font-size:1.4rem;font-weight:700;color:var(--marca);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .meta{font-size:.88rem;color:var(--ink2);margin-top:3px}
 .vivo{display:inline-flex;align-items:center;gap:7px;font-size:.76rem;font-weight:500;color:#1E7B34;background:#E8F6EC;border-radius:999px;padding:4px 11px 4px 9px;letter-spacing:.01em}
@@ -44,7 +44,7 @@ button.dl{font:inherit;font-size:.88rem;padding:8px 14px;border:1px solid var(--
 .kpi .l{font-size:.85rem;color:#D7D9DE}.kpi .v{font-size:1.6rem;font-weight:500;margin:6px 0 2px;color:#fff!important}.kpi .n{font-size:.82rem;color:#B9BCC4}
 .lista{margin-top:14px;overflow:hidden;background:#FFF1F6;border:3px solid #111318;box-shadow:0 4px 14px rgba(0,0,0,.18)}   /* lista de vendedores en rosado claro, con borde negro para que resalte */
 .th,.vrow{display:grid;grid-template-columns:30px minmax(150px,1fr) 64px 80px 80px 74px 74px 120px minmax(190px,1.3fr);gap:10px;align-items:center;padding:11px 18px}
-.th{font-size:.82rem;font-weight:700;background:#FCE3EC;border-bottom:1px solid #F3CFDC}
+.th{font-size:.82rem;font-weight:700;background:#111318;color:#fff;border-bottom:1px solid #111318}   /* titulos de columnas en negro con letras blancas */
 .th span{cursor:pointer;user-select:none}.r{text-align:right}
 .vrow{border-bottom:1px solid #F6DDE6;cursor:pointer}.vrow:hover{background:#FDE7EF}
 .chev{transition:transform .15s;color:#555;text-align:center}.vrow.ab .chev{transform:rotate(90deg)}
