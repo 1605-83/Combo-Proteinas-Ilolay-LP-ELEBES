@@ -116,7 +116,7 @@ const dmy=iso=>iso? iso.slice(8)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4) : '';
 const iso=d=>{ const m=String(d||'').trim().match(/^(\d{2})-(\d{2})-(\d{4})/); return m? m[3]+'-'+m[2]+'-'+m[1] : ''; };
 const titulo=s=>{ s=(s||'').trim(); if(!(s===s.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(s))) return s; return s.toLowerCase().replace(/(^|[^a-záéíóúñü])([a-záéíóúñü])/g,(m,a,b)=>a+b.toUpperCase()); };
 const DIA={L:'Lunes',M:'Martes',X:'Miércoles',J:'Jueves',V:'Viernes',S:'Sábado'}, ORD_DIA={L:1,M:2,X:3,J:4,V:5,S:6};
-let CART=null, NOMV={}, MES=[], VIVO=[], HOY='', vivoCorte='', corteMes='', modo='cli', abiertos=new Set(), sortK='vend', sortD=-1;
+let DESDE_DATOS='2026-08-01', CART=null, NOMV={}, MES=[], VIVO=[], HOY='', vivoCorte='', corteMes='', modo='cli', abiertos=new Set(), sortK='vend', sortD=-1;
 
 function parseCSV(t){
   const rows=[]; let row=[], f='', q=false;
@@ -169,12 +169,19 @@ function calcular(){
   const L5={v:{},cli:{},venta:{}}, N3={v:{},cli:{},venta:{}};
   for(const x of F){ const T= x.cod===COD_LECHE? L5 : x.cod===COD_NAT? N3 : null; if(!T || x.car<VIG_D || x.car>VIG_H) continue;
     T.v[x.v]=(T.v[x.v]||0)+x.cant; T.cli[x.cli]=(T.cli[x.cli]||0)+x.cant; T.venta[x.venta]=(T.venta[x.venta]||0)+x.cant; }
-  return {yaCompro, C, comboCli:usado, L5, N3};
+  // fechas de compra de cada cliente (pedido de Bruno, 20/10/2026), de cualquiera de los productos del tablero
+  // (yogur 180 y 220, leche 5323 y Natural 350): la ultima antes del combo (hasta el 20/10) y la actual (desde el 21/10)
+  const ULTC={}, ACT={};
+  for(const x of F){ if(x.cant<=0 || x.tc==='NCR' || x.tc==='NDB') continue;
+    const f= /^\d{4}-\d{2}-\d{2}$/.test(x.fc)? x.fc : x.car; if(!f) continue;
+    if(f<=EXCL_H){ if(!ULTC[x.cli] || f>ULTC[x.cli]) ULTC[x.cli]=f; }
+    else if(x.car>=VIG_D && x.car<=VIG_H){ if(!ACT[x.cli] || x.car>ACT[x.cli]) ACT[x.cli]=x.car; } }
+  return {yaCompro, C, comboCli:usado, L5, N3, ULTC, ACT};
 }
 const EST={ok:['t-ok','Válido'],no:['t-no','Ya compró proteína en sep/oct'],av:['t-av','Sin las 2 sin cargo'],rep:['t-pe','Repetido (ya tiene combo de este gramaje)']};
 
 function dibujar(){
-  const {yaCompro,C,comboCli,L5,N3}=calcular();
+  const {yaCompro,C,comboCli,L5,N3,ULTC,ACT}=calcular();
   // producto elegido: 180 / 220 filtran los combos; Leche 5323 y Natural 350 ordenan por esa columna y en cada vendedor
   // muestran los clientes que la compraron desde el 21/10 (pedido de Bruno, 20/10/2026)
   const fv=$('fVend').value, fsel=$('fGr').value, fg= fsel==='180'||fsel==='220'? fsel : '', fp= fsel==='l5'||fsel==='n3'? fsel : '', q='';
@@ -204,13 +211,13 @@ function dibujar(){
   document.querySelectorAll('.th span[data-k]').forEach(s=>{ s.textContent=s.textContent.replace(/ [▲▼]$/,'')+(s.dataset.k===sortK? (sortD>0?' ▲':' ▼') : ''); });
   let h='';
   for(const v of V){ const ab=abiertos.has(v.c);
-    const L=v.eleg.map(k=>({cod:String(k[0]), rs:k[1], loc:k[3], dia:k[5], g180:comboCli.has(String(k[0])+'|180'), g220:comboCli.has(String(k[0])+'|220'), l5:L5.cli[String(k[0])]||0, n3:N3.cli[String(k[0])]||0}))
+    const L=v.eleg.map(k=>({cod:String(k[0]), rs:k[1], loc:k[3], dia:k[5], g180:comboCli.has(String(k[0])+'|180'), g220:comboCli.has(String(k[0])+'|220'), l5:L5.cli[String(k[0])]||0, n3:N3.cli[String(k[0])]||0, ult:ULTC[String(k[0])]||'', act:ACT[String(k[0])]||''}))
       .filter(k=>(!q || k.cod===q || (k.rs||'').toLowerCase().includes(q)) && (!fp || k[fp]>0));
     if(q && !L.length) continue;
     h+=`<div class="vrow${ab?' ab':''}" data-v="${v.c}" role="button" tabindex="0" aria-expanded="${ab}"><span class="chev">›</span><span class="vn"><span class="cod">${v.c}</span>${esc(v.n)}</span><span class="r m">${fmtN(v.cart)}</span><span class="r m"><b>${v.c180}</b></span><span class="r m"><b>${v.c220}</b></span><span class="r m"><b>${fmtN(v.l5)}</b></span><span class="r m"><b>${fmtN(v.n3)}</b></span><span class="m"><span class="bar"><i style="width:${v.p*100}%"></i></span>${fmtP(v.p)}</span><span class="vend m">${v.vend.length? `<b>${v.vend.length} combo${v.vend.length>1?'s':''}</b> · ${v.vend.filter(x=>x.est==='ok').length} válido${v.vend.filter(x=>x.est==='ok').length===1?'':'s'}${v.vend.map(x=>`<span class="cl" title="${esc(x.cli+' '+titulo(x.rs))} · ${x.g} g · ${dmy(x.car)} · ${EST[x.est][1]}">${esc(x.cli)} ${esc(titulo(x.rs))}<i class="${x.est}">${x.g}</i></span>`).join('')}` : '—'}</span></div>`;
     if(ab){ L.sort((a,b)=>(fp? b[fp]-a[fp] : 0) || (+(a.g180||a.g220))-(+(b.g180||b.g220)) || (ORD_DIA[a.dia]||9)-(ORD_DIA[b.dia]||9) || a.cod.localeCompare(b.cod,undefined,{numeric:true}));
       const est=ok=>ok? '<span class="tag t-ok">Con combo</span>' : '<span class="tag t-pe">Pendiente</span>';
-      h+=`<div class="det"><table><thead><tr><th>Código</th><th>Razón social</th><th>Día de visita</th>${fg!=='220'? '<th>Combo 180 g</th>' : ''}${fg!=='180'? '<th>Combo 220 g</th>' : ''}<th class="r">Leche 5323</th><th class="r">Natural 350</th></tr></thead><tbody>${L.map(k=>`<tr><td><b>${esc(k.cod)}</b></td><td>${esc(titulo(k.rs))}</td><td>${DIA[k.dia]||'—'}</td>${fg!=='220'? `<td>${est(k.g180)}</td>` : ''}${fg!=='180'? `<td>${est(k.g220)}</td>` : ''}<td class="r">${k.l5? fmtN(k.l5) : '—'}</td><td class="r">${k.n3? fmtN(k.n3) : '—'}</td></tr>`).join('')||(fp? `<tr><td colspan="7">Ningún cliente para el combo compró ${fp==='l5'? 'Leche 5323' : 'Natural 350'} desde el 21/10.</td></tr>` : '<tr><td colspan="7">Sin clientes.</td></tr>')}</tbody></table></div>`; }
+      h+=`<div class="det"><table><thead><tr><th>Código</th><th>Razón social</th><th>Día de visita</th>${fg!=='220'? '<th>Combo 180 g</th>' : ''}${fg!=='180'? '<th>Combo 220 g</th>' : ''}<th class="r">Leche 5323</th><th class="r">Natural 350</th><th title="Última compra de yogur Proteína 180 / 220, leche 5323 o Natural 350 hasta el 20/10">Última compra</th><th title="Compra de esos productos desde el 21/10 (la más reciente)">Compra actual</th></tr></thead><tbody>${L.map(k=>`<tr><td><b>${esc(k.cod)}</b></td><td>${esc(titulo(k.rs))}</td><td>${DIA[k.dia]||'—'}</td>${fg!=='220'? `<td>${est(k.g180)}</td>` : ''}${fg!=='180'? `<td>${est(k.g220)}</td>` : ''}<td class="r">${k.l5? fmtN(k.l5) : '—'}</td><td class="r">${k.n3? fmtN(k.n3) : '—'}</td><td>${k.ult? dmy(k.ult) : `<span style="color:var(--ink2)">Sin compras desde ${dmy(DESDE_DATOS)}</span>`}</td><td>${k.act? `<span class="tag t-ok">${dmy(k.act)}</span>` : '—'}</td></tr>`).join('')||(fp? `<tr><td colspan="9">Ningún cliente para el combo compró ${fp==='l5'? 'Leche 5323' : 'Natural 350'} desde el 21/10.</td></tr>` : '<tr><td colspan="9">Sin clientes.</td></tr>')}</tbody></table></div>`; }
   }
   $('filas').innerHTML=h||'<div class="vacio">Sin resultados.</div>';
 }
@@ -244,7 +251,9 @@ $('fVend').addEventListener('change',dibujar); $('fGr').addEventListener('change
     // archivos de septiembre y octubre (el ultimo de cada mes)
     const arch=((await (await fetch(B+'archivos.json?t='+Date.now(),{cache:'no-store'})).json()).archivos||[]);
     const ult={}; for(const p of arch){ const mm=p.match(/ventas-(\d{4}-\d{2})-/); if(mm && (!ult[mm[1]]||p>ult[mm[1]])) ult[mm[1]]=p; }
-    const meses=Object.keys(ult).filter(ym=>ym>=EXCL_D.slice(0,7) && ym<=VIG_H.slice(0,7)).sort();
+    // tambien agosto (la base tiene ventas desde el 1/8) para la fecha de la ultima compra
+    const meses=Object.keys(ult).filter(ym=>ym>='2026-08' && ym<=VIG_H.slice(0,7)).sort();
+    DESDE_DATOS= meses.length? meses[0]+'-01' : EXCL_D;
     $('meta').textContent='Bajando ventas…';
     const txts=await Promise.all(meses.map(async ym=>{ const r=await fetch(RAW+ult[ym].split('/').map(encodeURIComponent).join('/'),{cache:'no-store'}); return r.ok? new TextDecoder('windows-1252').decode(await r.arrayBuffer()) : ''; }));
     MES=txts.flatMap(leer);
